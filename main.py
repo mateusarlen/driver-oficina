@@ -980,7 +980,8 @@ def imprimir_os(id: int):
             linhas_sc += f"<div class='box' style='margin-bottom:8px'><div class='box-row'><span>Telemetria:</span><span>RPM: {s['rpm']} | Temp: {s['temperatura']}°C | Tensão: {s['tensao']}V</span></div><div class='box-row'><span>Falhas (DTCs):</span><span style='color:#dc2626;font-weight:700'>{dtc}</span></div></div>"
         secao_scanner = f"<div class='section-title'>🔍 Diagnóstico Computadorizado / Scanner</div>{linhas_sc}"
 
-    assinatura_img_html = f"<img src='/uploads/{os_data["assinatura_cliente"]}' class='assinatura-img'/>" if os_data.get("assinatura_cliente") else ""
+    ass_cli = os_data.get("assinatura_cliente") or ""
+    assinatura_img_html = f"<img src='/uploads/{ass_cli}' class='assinatura-img'/>" if ass_cli else ""
     km_troca_txt = f"{os_data.get('km_proxima_troca')} km" if os_data.get('km_proxima_troca') else "—"
     if os_data.get("data_proxima_troca"):
         km_troca_txt += f" ({os_data.get('data_proxima_troca')})"
