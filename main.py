@@ -1,16 +1,19 @@
-from fastapi.responses import HTMLResponse
+import sys
+print(">>> [DRIVER] Carregando modulo main.py...", flush=True)
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-import sqlite3, os, uuid, hashlib
+import sqlite3, os, uuid, hashlib, io
 from datetime import datetime
+
 try:
     from PIL import Image, ImageDraw, ImageFont
     HAS_PIL = True
-except Exception:
+    print(">>> [DRIVER] Pillow carregado com sucesso.", flush=True)
+except Exception as e:
     HAS_PIL = False
-import io
+    print(f">>> [DRIVER AVISO] Pillow nao disponivel: {e}", flush=True)
 
 app = FastAPI(title="DRIVER - Multi-Oficinas")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -19,13 +22,16 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 DB_PATH = os.path.join(BASE_DIR, "database.db")
 
-if os.path.exists(os.path.join(BASE_DIR, "index.html")):
+if os.path.isdir(os.path.join(BASE_DIR, "public")) and os.path.exists(os.path.join(BASE_DIR, "public", "index.html")):
+    STATIC_DIR = os.path.join(BASE_DIR, "public")
+elif os.path.exists(os.path.join(BASE_DIR, "index.html")):
     STATIC_DIR = BASE_DIR
 elif os.path.exists(os.path.join(BASE_DIR, "..", "frontend", "public")):
     STATIC_DIR = os.path.join(BASE_DIR, "..", "frontend", "public")
 else:
-    STATIC_DIR = BASE_DIR
+    STATIC_DIR = os.path.join(BASE_DIR, "public")
 
+os.makedirs(STATIC_DIR, exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_DIR, "checklist"), exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_DIR, "assinaturas"), exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_DIR, "scanner"), exist_ok=True)
@@ -182,7 +188,21 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
+@app.on_event("startup")
+def startup_event():
+    print(">>> [DRIVER STARTUP] Executando inicializacao do banco de dados...", flush=True)
+    try:
+        init_db()
+        print(">>> [DRIVER STARTUP] Banco de dados pronto para uso!", flush=True)
+    except Exception as e:
+        print(f">>> [DRIVER ERRO CRITICO AO INICIAR BANCO]: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+
+@app.get("/api/health")
+@app.get("/healthz")
+def healthcheck():
+    return {"status": "ok", "app": "DRIVER", "version": "4.6"}
 
 # ─── AUTENTICAÇÃO ─────────────────────────────────────────────────────────────
 def get_current_user(authorization: str = Header(None)):
