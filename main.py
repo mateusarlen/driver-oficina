@@ -17,8 +17,14 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
-STATIC_DIR = os.path.join(BASE_DIR, "..", "frontend", "public")
 DB_PATH = os.path.join(BASE_DIR, "database.db")
+
+if os.path.exists(os.path.join(BASE_DIR, "index.html")):
+    STATIC_DIR = BASE_DIR
+elif os.path.exists(os.path.join(BASE_DIR, "..", "frontend", "public")):
+    STATIC_DIR = os.path.join(BASE_DIR, "..", "frontend", "public")
+else:
+    STATIC_DIR = BASE_DIR
 
 os.makedirs(os.path.join(UPLOAD_DIR, "checklist"), exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_DIR, "assinaturas"), exist_ok=True)
