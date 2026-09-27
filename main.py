@@ -5,7 +5,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import sqlite3, os, uuid, hashlib
 from datetime import datetime
-from PIL import Image, ImageDraw, ImageFont
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    HAS_PIL = True
+except Exception:
+    HAS_PIL = False
 import io
 
 app = FastAPI(title="DRIVER - Multi-Oficinas")
@@ -284,27 +288,32 @@ def atualizar_perfil(
 
 # ─── UTILITÁRIO: CARIMBO DATA/HORA NA FOTO ───────────────────────────────────
 def carimbar_foto(image_bytes: bytes, nome_oficina: str = "DRIVER") -> bytes:
-    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    draw = ImageDraw.Draw(img)
-    agora = datetime.now().strftime("%d/%m/%Y  %H:%M hs")
-    texto = f"  {agora}   | {nome_oficina}  "
-    w, h = img.size
-    font_size = max(22, h // 28)
-    try: font = ImageFont.truetype("arial.ttf", font_size)
-    except: font = ImageFont.load_default()
-    bbox = draw.textbbox((0, 0), texto, font=font)
-    tw, th = bbox[2]-bbox[0], bbox[3]-bbox[1]
-    margin = 12; x = margin; y = h - th - margin * 2
-    overlay = Image.new("RGBA", img.size, (0,0,0,0))
-    draw_overlay = ImageDraw.Draw(overlay)
-    draw_overlay.rectangle([x-8, y-8, x+tw+12, y+th+12], fill=(0,0,0,170))
-    img = img.convert("RGBA")
-    img = Image.alpha_composite(img, overlay).convert("RGB")
-    draw = ImageDraw.Draw(img)
-    draw.text((x, y), texto, fill=(255,255,255), font=font)
-    output = io.BytesIO()
-    img.save(output, format="JPEG", quality=92)
-    return output.getvalue()
+    if not HAS_PIL:
+        return image_bytes
+    try:
+        img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        draw = ImageDraw.Draw(img)
+        agora = datetime.now().strftime("%d/%m/%Y  %H:%M hs")
+        texto = f"  {agora}   | {nome_oficina}  "
+        w, h = img.size
+        font_size = max(22, h // 28)
+        try: font = ImageFont.truetype("arial.ttf", font_size)
+        except: font = ImageFont.load_default()
+        bbox = draw.textbbox((0, 0), texto, font=font)
+        tw, th = bbox[2]-bbox[0], bbox[3]-bbox[1]
+        margin = 12; x = margin; y = h - th - margin * 2
+        overlay = Image.new("RGBA", img.size, (0,0,0,0))
+        draw_overlay = ImageDraw.Draw(overlay)
+        draw_overlay.rectangle([x-8, y-8, x+tw+12, y+th+12], fill=(0,0,0,170))
+        img = img.convert("RGBA")
+        img = Image.alpha_composite(img, overlay).convert("RGB")
+        draw = ImageDraw.Draw(img)
+        draw.text((x, y), texto, fill=(255,255,255), font=font)
+        output = io.BytesIO()
+        img.save(output, format="JPEG", quality=92)
+        return output.getvalue()
+    except Exception:
+        return image_bytes
 
 # ─── DASHBOARD (ISOLADO POR USUÁRIO) ─────────────────────────────────────────
 @app.get("/api/dashboard")

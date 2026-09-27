@@ -2,6 +2,7 @@
 title Enviar DRIVER para o GitHub
 color 0B
 cd /d C:\DRIVER_CLOUD
+set "PATH=C:\Program Files\Git\cmd;C:\Program Files\Git\bin;C:\Program Files\Git\mingw64\bin;%PATH%"
 
 echo ========================================================
 echo   ENVIANDO PROJETO DRIVER PARA O SEU GITHUB
@@ -14,7 +15,7 @@ echo.
 echo Aguarde...
 echo.
 
-git push -u origin main
+"C:\Program Files\Git\cmd\git.exe" push -u origin main
 
 echo.
 if %errorlevel% equ 0 (
